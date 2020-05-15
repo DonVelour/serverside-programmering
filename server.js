@@ -152,18 +152,4 @@ var server = http.createServer(function(req, res) {
 
 });
 
-var io = require("socket.io")(server);
-
-io.on("connection", function(socket) {
-  console.log("user connected");
-  socket.emit("welcome", "welcome man");
-
-  socket.on("ty", (message) => {
-    console.log(message)
-  });
-
-setInterval(stuff)
-
-});
-
 server.listen(8080)
