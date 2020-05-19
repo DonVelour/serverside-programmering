@@ -3,11 +3,6 @@ var url = require("url")
 var mysql = require('mysql')
 var body = require("body")
 var bcrypt = require("bcrypt")
-var email
-var password
-var userid
-var chat_id
-
 
 var con = mysql.createConnection({
   host: 'localhost',
@@ -41,7 +36,7 @@ var server = http.createServer(function(req, res) {
             })
             break;
         default:
-            jsontest(req, parsedURL.pathname ,function(data){
+            jsontest(req, parsedURL.pathname.slice(1) ,function(data){
                 console.log(data)
                 get(data, function(result){
                     res.end(JSON.stringify(result))
@@ -55,25 +50,16 @@ var server = http.createServer(function(req, res) {
 });
 server.listen(8080)
 
-function jsontest(req, path, callback) {
+function jsontest(req, query, callback) {
     body(req, {}, (err,txt)=> {
         var parsed = JSON.parse(txt)
-            switch (path) {
-                case "/getchats":
-                    return callback(`SELECT chats.id, chats.chat_name, chats.chat_link FROM chats INNER JOIN chat_members ON chats.id = chat_members.chat_id WHERE chat_members.user_id = ${parsed.userid}`)
-                    break;
-                case "/getmessages":
-                    return callback(`SELECT messages.text, messages.user_id, users.user_name FROM messages INNER JOIN users ON messages.user_id = users.id WHERE chat_id = ${parsed.chatid}`)
-                    break;
-                case "/newmessages":
-                    return callback(`INSERT INTO messages (user_id, chat_id, text) VALUES (${parsed.userid}, ${parsed.chatid}, '${parsed.text}')`)
-                    break;
-                case "/messagecheck":
-                    return callback(`SELECT messages.text, messages.user_id, users.user_name FROM messages INNER JOIN users ON messages.user_id = users.id WHERE chat_id = ${parsed.chatid} LIMIT ${parseInt(parsed.arrcount)}, ${parseInt(parsed.arrcount) + 200}`)
-                    break;
-                default:
-                    break;
-            }
+
+        return callback({
+            'getchats':`SELECT chats.id, chats.chat_name, chats.chat_link FROM chats INNER JOIN chat_members ON chats.id = chat_members.chat_id WHERE chat_members.user_id = ${parsed.userid}`,
+            "getmessages":`SELECT messages.text, messages.user_id, users.user_name FROM messages INNER JOIN users ON messages.user_id = users.id WHERE chat_id = ${parsed.chatid}`,
+            "newmessages":`INSERT INTO messages (user_id, chat_id, text) VALUES (${parsed.userid}, ${parsed.chatid}, '${parsed.text}')`,
+            "messagecheck":`SELECT messages.text, messages.user_id, users.user_name FROM messages INNER JOIN users ON messages.user_id = users.id WHERE chat_id = ${parsed.chatid} LIMIT ${parseInt(parsed.arrcount)}, ${parseInt(parsed.arrcount) + 200}`
+        }[query]);
     })
 }
 
